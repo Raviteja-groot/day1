@@ -23,7 +23,7 @@ function Login({ onLoginSuccess }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1 className="login-title">Suchi Fashion House</h1>
+        <h1 className="login-title">Suchi Fashion House raviteja</h1>
         <p className="login-subtitle">Sign in to continue to your webstore</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
