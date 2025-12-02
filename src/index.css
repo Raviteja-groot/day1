@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* You can keep or add global resets here if you want */
+body {
+  @apply min-h-screen w-full;
+}
