@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
+import SignUp from './pages/SignUp'
 
 const CATEGORIES = [
   { id: 'genz', label: 'Fashion GenZ' },
@@ -322,6 +324,7 @@ const PRODUCTS = [
 ]
 
 function App() {
+  const [currentView, setCurrentView] = useState('landing') // 'landing' | 'login' | 'signup' | 'home'
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('genz')
   const [activeView, setActiveView] = useState('store') // 'store' | 'wishlist' | 'bag' | 'checkout'
@@ -423,17 +426,57 @@ function App() {
     }
   }, [showWelcome])
 
-  if (!isLoggedIn) {
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    setCurrentView('home')
+    setShowWelcome(true)
+  }
+
+  const handleSignUpSuccess = () => {
+    setIsLoggedIn(true)
+    setCurrentView('home')
+    setShowWelcome(true)
+  }
+
+  // Show landing page
+  if (currentView === 'landing') {
     return (
       <div className="app-shell">
-        <Login
-          onLoginSuccess={() => {
-            setIsLoggedIn(true)
-            setShowWelcome(true)
-          }}
+        <Landing
+          onLoginClick={() => setCurrentView('login')}
+          onSignUpClick={() => setCurrentView('signup')}
         />
       </div>
     )
+  }
+
+  // Show login page
+  if (currentView === 'login') {
+    return (
+      <div className="app-shell">
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onBack={() => setCurrentView('landing')}
+        />
+      </div>
+    )
+  }
+
+  // Show signup page
+  if (currentView === 'signup') {
+    return (
+      <div className="app-shell">
+        <SignUp
+          onSignUpSuccess={handleSignUpSuccess}
+          onBack={() => setCurrentView('landing')}
+        />
+      </div>
+    )
+  }
+
+  // Show home page (store)
+  if (!isLoggedIn) {
+    return null
   }
 
   const filterByPrice = (product) => {
@@ -476,7 +519,7 @@ function App() {
           <div className="store-hero-text">
             <h1>Discover your style</h1>
             <p>
-              Choose your vibe first – we’ll show you curated looks just like
+              Choose your vibe first – we'll show you curated looks just like
               Ajio: GenZ fits, timeless tradition, easy casuals, and must-have
               footwear.
             </p>

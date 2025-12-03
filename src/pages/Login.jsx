@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import '../App.css'
 
-function Login({ onLoginSuccess }) {
+function Login({ onLoginSuccess, onBack }) {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -23,6 +23,11 @@ function Login({ onLoginSuccess }) {
   return (
     <div className="login-page">
       <div className="login-card">
+        {onBack && (
+          <button className="login-back-btn" onClick={onBack}>
+            ← Back
+          </button>
+        )}
         <h1 className="login-title">Suchi Fashion House raviteja</h1>
         <p className="login-subtitle">Sign in to continue to your webstore</p>
 
