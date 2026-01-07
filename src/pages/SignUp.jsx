@@ -1,56 +1,32 @@
-import { useState, useEffect } from 'react'
-import '../App.css'
+import { useState } from "react";
+import "../App.css";
+import api from "../utils/api";
 
-function SignUp({ onSignUpSuccess, onBack }) {
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [showOtp, setShowOtp] = useState(false)
-  const [showOtpSent, setShowOtpSent] = useState(false)
-  const [showWelcome, setShowWelcome] = useState(false)
+function SignUp({ onSignupSuccess, onBack }) {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleEnterPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSendOtp()
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    try {
+      await api("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+
+      onSignupSuccess(); // Go to login page
+    } catch (err) {
+      setError(err.message || "Signup failed");
     }
   }
-
-  const handleSendOtp = () => {
-    if (email.trim() && phone.trim()) {
-      setShowOtpSent(true)
-      setShowOtp(true)
-      
-      // Hide OTP sent message after 3 seconds
-      setTimeout(() => {
-        setShowOtpSent(false)
-      }, 3000)
-    }
-  }
-
-  const handleOtpChange = (e) => {
-    const value = e.target.value
-    // Only allow numeric input and max 4 digits
-    if (/^\d*$/.test(value) && value.length <= 4) {
-      setOtp(value)
-    }
-  }
-
-  useEffect(() => {
-    // When 4 digit OTP is entered, redirect to home
-    if (otp.length === 4 && /^\d{4}$/.test(otp)) {
-      setShowWelcome(true)
-      setTimeout(() => {
-        onSignUpSuccess()
-      }, 500)
-    }
-  }, [otp, onSignUpSuccess])
-
-  useEffect(() => {
-    if (showWelcome) {
-      const timer = setTimeout(() => setShowWelcome(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [showWelcome])
 
   return (
     <div className="signup-page">
@@ -58,11 +34,24 @@ function SignUp({ onSignUpSuccess, onBack }) {
         <button className="signup-back-btn" onClick={onBack}>
           ← Back
         </button>
-        
+
         <h1 className="signup-title">Create Your Account</h1>
         <p className="signup-subtitle">Join Suchi Fashion House</p>
 
-        <form className="signup-form" onSubmit={(e) => e.preventDefault()}>
+        {error && <div className="signup-otp-sent">{error}</div>}
+
+        <form className="signup-form" onSubmit={handleSubmit}>
+          <label className="signup-label">
+            Name
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              className="signup-input"
+            />
+          </label>
+
           <label className="signup-label">
             Email
             <input
@@ -75,60 +64,23 @@ function SignUp({ onSignUpSuccess, onBack }) {
           </label>
 
           <label className="signup-label">
-            Phone Number
-            <div className="signup-phone-container">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onKeyPress={handleEnterPress}
-                placeholder="Enter phone number"
-                className="signup-input signup-phone-input"
-              />
-              <button
-                type="button"
-                className="signup-enter-btn"
-                onClick={handleSendOtp}
-              >
-                Enter
-              </button>
-            </div>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              className="signup-input"
+            />
           </label>
 
-          {showOtpSent && (
-            <div className="signup-otp-sent">
-              OTP sent
-            </div>
-          )}
-
-          {showOtp && (
-            <label className="signup-label">
-              OTP
-              <input
-                type="text"
-                value={otp}
-                onChange={handleOtpChange}
-                placeholder="Enter 4 digit OTP"
-                className="signup-input signup-otp-input"
-                maxLength={4}
-              />
-            </label>
-          )}
+          <button type="submit" className="signup-enter-btn">
+            Create Account
+          </button>
         </form>
-
-        <p className="signup-hint">
-          Enter your email and phone number, then press Enter to receive OTP.
-        </p>
       </div>
-
-      {showWelcome && (
-        <div className="signup-welcome-toast">
-          Welcome to suchi fashion store
-        </div>
-      )}
     </div>
-  )
+  );
 }
 
-export default SignUp
-
+export default SignUp;

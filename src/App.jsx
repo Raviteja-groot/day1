@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import './App.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Landing from './pages/Landing'
-import Login from './pages/Login'
-import SignUp from './pages/SignUp'
+import Login from "./components/login";
+import SignUp from "./components/signup";
+import api from "./utils/api";
+
 
 const CATEGORIES = [
   { id: 'genz', label: 'Fashion GenZ' },
@@ -17,7 +19,7 @@ const PRICE_FILTERS = [
   { id: 'all', label: 'Any price' },
   { id: 'under1000', label: 'Under ₹1000' },
   
-  { id: '1000to2000', label: '₹1000 – ₹2000' },
+  { id: '1000to2000', label: '₹1000 to ₹2000' },
   { id: 'above2000', label: 'Above ₹2000' },
 ]
 
@@ -324,8 +326,11 @@ const PRODUCTS = [
 ]
 
 function App() {
+
   const [currentView, setCurrentView] = useState('landing') // 'landing' | 'login' | 'signup' | 'home'
+  const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('genz')
   const [activeView, setActiveView] = useState('store') // 'store' | 'wishlist' | 'bag' | 'checkout'
   const [priceFilter, setPriceFilter] = useState('all')
@@ -338,17 +343,28 @@ function App() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null)
   const [selectedUpiApp, setSelectedUpiApp] = useState(null)
 
-  const toggleWishlist = (productId) => {
+  const toggleWishlist = async (productId) => {
+    if (!isLoggedIn) {
+      alert("Please login first");
+      return;
+    }
+
     setWishlist((prev) =>
       prev.includes(productId)
         ? prev.filter((id) => id !== productId)
-        : [...prev, productId],
-    )
-  }
+        : [...prev, productId]
+    );
+  };
+
 
   const isInWishlist = (productId) => wishlist.includes(productId)
 
-  const addToBag = (productId) => {
+  const addToBag = async (productId) => {
+    if (!isLoggedIn) {
+      alert("Please login first");
+      return;
+    }
+    
     setBag((prevBag) => {
       const existingItem = prevBag.find((item) => item.productId === productId)
       if (existingItem) {
@@ -426,13 +442,36 @@ function App() {
     }
   }, [showWelcome])
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true)
-    setCurrentView('home')
-    setShowWelcome(true)
-  }
+  // Check for existing token on app load
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      // Validate token by making a test API call
+      api('/api/protected')
+        .then(() => {
+          setIsLoggedIn(true)
+          setCurrentView('home')
+        })
+        .catch(() => {
+          // Token is invalid, remove it
+          localStorage.removeItem('token')
+          setCurrentView('landing')
+        })
+    } else {
+      setCurrentView('landing')
+    }
+    setIsLoading(false)
+  }, [])
 
-  const handleSignUpSuccess = () => {
+  
+
+  const handleSignUpSuccess = (userData, token) => {
+    if (token) {
+      localStorage.setItem('token', token)
+    }
+    if (userData) {
+      setUser(userData)
+    }
     setIsLoggedIn(true)
     setCurrentView('home')
     setShowWelcome(true)
@@ -449,6 +488,25 @@ function App() {
       </div>
     )
   }
+
+function handleLoginSuccess(userData, token) {
+  if (token) {
+    localStorage.setItem('token', token);
+  }
+  setUser(userData);          // save user
+  setIsLoggedIn(true);        // set logged in state
+  setCurrentView('home');     // go to home page
+}
+
+function handleLogout() {
+  localStorage.removeItem("token");
+  setUser(null);
+  setIsLoggedIn(false);
+  setWishlist([]);
+  setBag([]);
+  setCurrentView("landing");
+}
+
 
   // Show login page
   if (currentView === 'login') {
@@ -475,9 +533,7 @@ function App() {
   }
 
   // Show home page (store)
-  if (!isLoggedIn) {
-    return null
-  }
+  if (currentView === 'home') {
 
   const filterByPrice = (product) => {
     const price = product.priceValue
@@ -506,13 +562,9 @@ function App() {
   )
 
   return (
-    <div className="app-shell">
-      <Header
-        onLogout={() => {
-          setIsLoggedIn(false)
-          setActiveView('store')
-        }}
-      />
+  <div className="app-shell">
+    <Header onLogout={handleLogout} />
+
 
       <main className="store-main">
         <section className="store-hero">
@@ -1055,6 +1107,9 @@ function App() {
       <Footer />
     </div>
   )
+  }
+
+  return null
 }
 
 export default App
